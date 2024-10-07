@@ -3,7 +3,6 @@
 // Refer to the license.txt file included.
 
 #include <clocale>
-#include <iostream>
 #include <memory>
 #include <thread>
 #include <QFileDialog>
@@ -17,14 +16,15 @@
 #include <QtWidgets>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#undef _UNICODE
-#include <getopt.h>
 #ifdef __APPLE__
 #include <unistd.h> // for chdir
 #endif
 #ifdef _WIN32
 #include <shlobj.h>
 #include <windows.h>
+#else
+#include <iostream>
+#include <getopt.h>
 #endif
 #ifdef __unix__
 #include <QVariant>
