@@ -190,7 +190,7 @@ GMainWindow::GMainWindow(Core::System& system_)
 
         // TODO: Fix inconsistent indentation in this switch caused by clang-format
         uberswitch(args[i]) {
-            ubercase(QStringLiteral("-d")) : {
+            ubercase(QStringLiteral("--dump-video")) : ubercase(QStringLiteral("-d")) : {
                 if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
                     continue;
                 }
@@ -203,12 +203,12 @@ GMainWindow::GMainWindow(Core::System& system_)
                 continue;
             }
 
-            ubercase(QStringLiteral("-f")) : {
+            ubercase(QStringLiteral("--fullscreen")) : ubercase(QStringLiteral("-f")) : {
                 fullscreen_override = true;
                 continue;
             }
 
-            ubercase(QStringLiteral("-g")) : {
+            ubercase(QStringLiteral("--gdbport")) : ubercase(QStringLiteral("-g")) : {
                 if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
                     continue;
                 }
@@ -217,25 +217,25 @@ GMainWindow::GMainWindow(Core::System& system_)
                 continue;
             }
 
-            ubercase(QStringLiteral("-h")) : {
+            ubercase(QStringLiteral("--help")) : ubercase(QStringLiteral("-h")) : {
                 const std::string help_string =
                     std::string("Usage: ") + args[0].toStdString() +
                     " [options] <file path>\n"
-                    "-d [path]    Dump video recording of emulator playback to the given file "
-                    "path\n"
-                    "-g [port]    Enable gdb stub on the given port\n"
-                    "-f           Start in fullscreen mode\n"
-                    "-h           Display this help and exit\n"
-                    "-i [path]    Install a CIA file at the given path\n"
-                    "-p [path]    Play a TAS movie located at the given path\n"
-                    "-r [path]    Record a TAS movie to the given file path\n"
-                    "-v           Output version information and exit";
+                    "-d, --dump-video [path]     Dump video recording of emulator playback to the "
+                    "given file path\n"
+                    "-f, --fullscreen            Start in fullscreen mode\n"
+                    "-g, --gdbport [port]        Enable gdb stub on the given port\n"
+                    "-h, --help                  Display this help and exit\n"
+                    "-i, --install [path]        Install a CIA file at the given path\n"
+                    "-p, --movie-play [path]     Play a TAS movie located at the given path\n"
+                    "-r, --movie-record [path]   Record a TAS movie to the given file path\n"
+                    "-v, --version               Output version information and exit";
 
                 ShowCommandOutput("Help", help_string);
                 exit(0);
             }
 
-            ubercase(QStringLiteral("-i")) : {
+            ubercase(QStringLiteral("--install")) : ubercase(QStringLiteral("-i")) : {
                 if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
                     continue;
                 }
@@ -269,7 +269,7 @@ GMainWindow::GMainWindow(Core::System& system_)
                 exit(0);
             }
 
-            ubercase(QStringLiteral("-p")) : {
+            ubercase(QStringLiteral("--movie-play")) : ubercase(QStringLiteral("-p")) : {
                 if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
                     continue;
                 }
@@ -278,7 +278,7 @@ GMainWindow::GMainWindow(Core::System& system_)
                 continue;
             }
 
-            ubercase(QStringLiteral("-r")) : {
+            ubercase(QStringLiteral("--movie-record")) : ubercase(QStringLiteral("-r")) : {
                 if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
                     continue;
                 }
@@ -287,14 +287,14 @@ GMainWindow::GMainWindow(Core::System& system_)
                 continue;
             }
 
-            ubercase(QStringLiteral("-v")) : {
+            ubercase(QStringLiteral("--version")) : ubercase(QStringLiteral("-v")) : {
                 const std::string version_string =
                     std::string("Lime3DS ") + Common::g_scm_branch + " " + Common::g_scm_desc;
                 ShowCommandOutput("Version", version_string);
                 exit(0);
             }
 
-            ubercase(QStringLiteral("-w")) : {
+            ubercase(QStringLiteral("--windowed")) : ubercase(QStringLiteral("-w")) : {
                 fullscreen_override = false;
                 continue;
             }
