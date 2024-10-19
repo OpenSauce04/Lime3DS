@@ -309,6 +309,9 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(lime_qt PRIVATE Qt6::DBus gamemode)
 endif()
 
+target_include_directories(lime_qt PRIVATE "${CMAKE_SOURCE_DIR}/externals/uberswitch/include")
+add_definitions(-DUBERSWITCH_SHORTNAME=0)
+
 target_compile_definitions(lime_qt PRIVATE
     # Use QStringBuilder for string concatenation to reduce
     # the overall number of temporary strings created.

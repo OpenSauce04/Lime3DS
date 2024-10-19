@@ -17,6 +17,7 @@
 #include <QtWidgets>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <uberswitch/uberswitch.hpp>
 #ifdef __APPLE__
 #include <unistd.h> // for chdir
 #endif
@@ -187,121 +188,123 @@ GMainWindow::GMainWindow(Core::System& system_)
             break;
         }
 
-        // Dump video
-        if (args[i] == QStringLiteral("-d")) {
-            if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+        // TODO: Fix inconsistent indentation in this switch caused by clang-format
+        uberswitch(args[i]) {
+            ubercase(QStringLiteral("-d")) : {
+                if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+                    continue;
+                }
+                if (!DynamicLibrary::FFmpeg::LoadFFmpeg()) {
+                    ShowFFmpegErrorMessage();
+                    continue;
+                }
+                video_dumping_path = args[++i];
+                video_dumping_on_start = true;
                 continue;
             }
-            if (!DynamicLibrary::FFmpeg::LoadFFmpeg()) {
-                ShowFFmpegErrorMessage();
+
+            ubercase(QStringLiteral("-f")) : {
+                fullscreen_override = true;
                 continue;
             }
-            video_dumping_path = args[++i];
-            video_dumping_on_start = true;
-            continue;
-        }
 
-        // Launch game in fullscreen mode
-        if (args[i] == QStringLiteral("-f")) {
-            fullscreen_override = true;
-            continue;
-        }
-
-        // Enable GDB stub
-        if (args[i] == QStringLiteral("-g")) {
-            if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+            ubercase(QStringLiteral("-g")) : {
+                if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+                    continue;
+                }
+                Settings::values.use_gdbstub = true;
+                Settings::values.gdbstub_port = strtoul(args[++i].toLatin1(), NULL, 0);
                 continue;
             }
-            Settings::values.use_gdbstub = true;
-            Settings::values.gdbstub_port = strtoul(args[++i].toLatin1(), NULL, 0);
-            continue;
-        }
 
-        if (args[i] == QStringLiteral("-h")) {
-            const std::string help_string =
-                std::string("Usage: ") + args[0].toStdString() +
-                " [options] <file path>\n"
-                "-d [path]    Dump video recording of emulator playback to the given file path\n"
-                "-g [port]    Enable gdb stub on the given port\n"
-                "-f           Start in fullscreen mode\n"
-                "-h           Display this help and exit\n"
-                "-i [path]    Install a CIA file at the given path\n"
-                "-p [path]    Play a TAS movie located at the given path\n"
-                "-r [path]    Record a TAS movie to the given file path\n"
-                "-v           Output version information and exit";
+            ubercase(QStringLiteral("-h")) : {
+                const std::string help_string =
+                    std::string("Usage: ") + args[0].toStdString() +
+                    " [options] <file path>\n"
+                    "-d [path]    Dump video recording of emulator playback to the given file "
+                    "path\n"
+                    "-g [port]    Enable gdb stub on the given port\n"
+                    "-f           Start in fullscreen mode\n"
+                    "-h           Display this help and exit\n"
+                    "-i [path]    Install a CIA file at the given path\n"
+                    "-p [path]    Play a TAS movie located at the given path\n"
+                    "-r [path]    Record a TAS movie to the given file path\n"
+                    "-v           Output version information and exit";
 
-            ShowCommandOutput("Help", help_string);
-            exit(0);
-        }
+                ShowCommandOutput("Help", help_string);
+                exit(0);
+            }
 
-        if (args[i] == QStringLiteral("-i")) {
-            if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+            ubercase(QStringLiteral("-i")) : {
+                if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+                    continue;
+                }
+                Service::AM::InstallStatus result =
+                    Service::AM::InstallCIA(args[++i].toStdString());
+                if (result != Service::AM::InstallStatus::Success) {
+                    std::string failure_reason;
+
+                    if (result == Service::AM::InstallStatus::ErrorFailedToOpenFile)
+                        failure_reason = "Unable to open file.";
+
+                    if (result == Service::AM::InstallStatus::ErrorFileNotFound)
+                        failure_reason = "File not found.";
+
+                    if (result == Service::AM::InstallStatus::ErrorAborted)
+                        failure_reason = "Install was aborted.";
+
+                    if (result == Service::AM::InstallStatus::ErrorInvalid)
+                        failure_reason = "CIA is invalid.";
+
+                    if (result == Service::AM::InstallStatus::ErrorEncrypted)
+                        failure_reason = "CIA is encrypted.";
+
+                    std::string failure_string = "Failed to install CIA: " + failure_reason;
+                    ShowCommandOutput("Failure", failure_string);
+                    exit((int)result +
+                         2); // 2 is added here to avoid stepping on the toes of
+                             // exit codes 1 and 2 which have pre-established conventional meanings
+                }
+                ShowCommandOutput("Success", "Installed CIA successfully.");
+                exit(0);
+            }
+
+            ubercase(QStringLiteral("-p")) : {
+                if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+                    continue;
+                }
+                movie_playback_path = args[++i];
+                movie_playback_on_start = true;
                 continue;
             }
-            Service::AM::InstallStatus result = Service::AM::InstallCIA(args[++i].toStdString());
-            if (result != Service::AM::InstallStatus::Success) {
-                std::string failure_reason;
 
-                if (result == Service::AM::InstallStatus::ErrorFailedToOpenFile)
-                    failure_reason = "Unable to open file.";
-
-                if (result == Service::AM::InstallStatus::ErrorFileNotFound)
-                    failure_reason = "File not found.";
-
-                if (result == Service::AM::InstallStatus::ErrorAborted)
-                    failure_reason = "Install was aborted.";
-
-                if (result == Service::AM::InstallStatus::ErrorInvalid)
-                    failure_reason = "CIA is invalid.";
-
-                if (result == Service::AM::InstallStatus::ErrorEncrypted)
-                    failure_reason = "CIA is encrypted.";
-
-                std::string failure_string = "Failed to install CIA: " + failure_reason;
-                ShowCommandOutput("Failure", failure_string);
-                exit((int)result +
-                     2); // 2 is added here to avoid stepping on the toes of
-                         // exit codes 1 and 2 which have pre-established conventional meanings
-            }
-            ShowCommandOutput("Success", "Installed CIA successfully.");
-            exit(0);
-        }
-
-        if (args[i] == QStringLiteral("-p")) {
-            if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+            ubercase(QStringLiteral("-r")) : {
+                if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+                    continue;
+                }
+                movie_record_path = args[++i];
+                movie_record_on_start = true;
                 continue;
             }
-            movie_playback_path = args[++i];
-            movie_playback_on_start = true;
-            continue;
-        }
 
-        if (args[i] == QStringLiteral("-r")) {
-            if (i >= args.size() - 1 || args[i + 1].startsWith(QChar::fromLatin1('-'))) {
+            ubercase(QStringLiteral("-v")) : {
+                const std::string version_string =
+                    std::string("Lime3DS ") + Common::g_scm_branch + " " + Common::g_scm_desc;
+                ShowCommandOutput("Version", version_string);
+                exit(0);
+            }
+
+            ubercase(QStringLiteral("-w")) : {
+                fullscreen_override = false;
                 continue;
             }
-            movie_record_path = args[++i];
-            movie_record_on_start = true;
-            continue;
-        }
 
-        if (args[i] == QStringLiteral("-v")) {
-            const std::string version_string =
-                std::string("Lime3DS ") + Common::g_scm_branch + " " + Common::g_scm_desc;
-            ShowCommandOutput("Version", version_string);
-            exit(0);
+        default: {
+            if (i == args.size() - 1 && !args[i].startsWith(QChar::fromLatin1('-'))) {
+                game_path = args[i];
+                continue;
+            }
         }
-
-        // Launch game in windowed mode
-        if (args[i] == QStringLiteral("-w")) {
-            fullscreen_override = false;
-            continue;
-        }
-
-        // Launch game at path
-        if (i == args.size() - 1 && !args[i].startsWith(QChar::fromLatin1('-'))) {
-            game_path = args[i];
-            continue;
         }
     }
 

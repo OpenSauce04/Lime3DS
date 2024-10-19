@@ -94,3 +94,6 @@
 [submodule "lime3ds-compatibility-list"]
 	path = dist/compatibility_list
 	url = https://github.com/Lime3DS/compatibility-list
+[submodule "uberswitch"]
+	path = externals/uberswitch
+	url = https://github.com/falemagn/uberswitch
