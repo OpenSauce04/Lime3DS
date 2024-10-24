@@ -311,6 +311,8 @@ endif()
 
 target_include_directories(lime_qt PRIVATE "${CMAKE_SOURCE_DIR}/externals/uberswitch/include")
 add_definitions(-DUBERSWITCH_SHORTNAME=0)
+# Address https://github.com/falemagn/uberswitch/issues/1 when building with MSVC
+add_definitions(-DUBERSWITCH_ALLOW_NESTING=0)
 
 target_compile_definitions(lime_qt PRIVATE
     # Use QStringBuilder for string concatenation to reduce
