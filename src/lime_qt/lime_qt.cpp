@@ -3,6 +3,7 @@
 // Refer to the license.txt file included.
 
 #include <clocale>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <thread>
@@ -25,7 +26,6 @@
 #include <shlobj.h>
 #include <windows.h>
 #else
-#include <iostream>
 #include <getopt.h>
 #endif
 #ifdef __unix__
